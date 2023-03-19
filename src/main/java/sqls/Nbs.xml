@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+	
+	
+	
+<mapper namespace="Nbs">
+	<select id="nbslist" resultType="ITzy.OTT.dto.NbsDto">
+		select seq, id, ref, step, depth, title, content, del, filename, newfilename, readcount, downcount, regdate
+		from (select row_number()over(order by ref desc, step asc) as rnum,
+				seq, id, ref, step, depth, title, content, del, filename, newfilename, readcount, downcount, regdate
+				from nbs
+				<if test="nchoice != null and nchoice != '' and nsearch != null and nsearch != '' ">
+					<if test="nchoice == 'title'">
+						where title like concat('%', #{nsearch}, '%')
+					</if>
+					
+					<if test="nchoice == 'content'">
+						where content like concat('%', #{nsearch}, '%')
+					</if>
+					
+					<if test="nchoice == 'writer'">
+						where id=#{nsearch}
+					</if>					
+				</if>
+				 order by ref desc, step asc) a
+				where rnum between ${start} and ${end}	
+	</select>
+	
+	<insert id="uploadNbs" parameterType="ITzy.OTT.dto.NbsDto">
+		insert into nbs(id, title, content, filename, newfilename,
+			readcount, downcount, regdate, del, ref, step, depth)
+		values (#{id}, #{title}, #{content}, #{filename}, #{newfilename}, 0, 0, now(), 0,
+			(select ifnull(max(ref), 0) +1 from nbs b), 0, 0)
+	</insert>
+	
+	<update id="downcount" parameterType="Integer">
+		update nbs
+		set downcount = downcount + 1
+		where seq = #{seq}
+	</update>
+	
+	<select id="getNbs" parameterType="Integer" resultType="ITzy.OTT.dto.NbsDto">
+	select seq, id, title, content, filename, newfilename, 
+		readcount, downcount, regdate, del, ref, step, depth
+	from nbs
+	where seq=#{seq}
+	</select>
+	
+	<select id="getAllNbs" parameterType="ITzy.OTT.dto.NbsParam" resultType="java.lang.Integer">
+		select ifnull(count(*), 0)
+		from nbs
+	
+		<if test="nchoice != null and nchoice != '' and nsearch != null and nsearch != '' ">
+				<if test="nchoice == 'title'">
+					where title like concat('%', #{nsearch}, '%') and del=0
+				</if>
+				
+				<if test="nchoice == 'content'">
+					where content like concat('%', #{nsearch}, '%') and del=0
+				</if>
+				
+				<if test="nchoice == 'writer'">
+					where id=#{nsearch} and del=0
+				</if>					
+			</if>					
+	</select>
+	
+	
+	
+	<update id="readcountNbs" parameterType="Integer">
+		update nbs
+		set readcount = readcount + 1
+		where seq = #{seq}
+	</update>
+	
+	<update id="updateNbs" parameterType="ITzy.OTT.dto.NbsDto">
+		update nbs
+		set title=#{title}, content=#{content}, filename=#{filename}, newfilename=#{newfilename}, regdate=now()
+		where seq = #{seq}
+	</update>
+	
+	
+	<delete id="deleteNbs" parameterType="Integer">
+		update nbs
+		set del = 1
+		where seq = #{seq}
+	</delete>
+	
+	
+	<!-- 답글 -->	
+	<!-- 수정 -->
+	<update id="answerNbsUpdate" parameterType="ITzy.OTT.dto.NbsDto">
+		update nbs
+		set step=step+1
+		where ref=(select ref from (select ref from nbs a where seq=#{seq}) A)
+			and step>(select step from (select step from nbs b where seq=#{seq}) B)
+	</update>	
+	<!-- 추가 -->
+	
+	
+	
+	
+	<insert id="answerNbsInsert" parameterType="ITzy.OTT.dto.NbsDto">
+		insert into nbs(id, title, content, filename, newfilename, readcount, downcount, regdate, del, ref, step, depth)
+		values(#{id}, #{title}, #{content}, #{filename}, #{newfilename}, 0, 0, now(), 0, 
+					  (select ref from nbs a where seq=#{seq}),
+					  (select step from nbs b where seq=#{seq})+1,
+					  (select depth from nbs c where seq=#{seq})+1)
+				
+	</insert>
+	
+	
+	<!-- 댓글 -->
+	<insert id="commentWrite" parameterType="ITzy.OTT.dto.NbsComment">
+		insert into nbscomment(seq, id, content, regdate)
+		values(#{seq}, #{id}, #{content}, now())
+	</insert>
+	
+	<select id="commentList" parameterType="Integer" resultType="ITzy.OTT.dto.NbsComment">
+		select *
+		from nbscomment
+		where seq=#{seq}
+		order by regdate desc
+	</select>
+</mapper>

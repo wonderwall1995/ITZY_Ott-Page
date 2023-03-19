@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+	
+<mapper namespace="Pds">
+	<select id="pdslist" resultType="ITzy.OTT.dto.PdsDto">
+		select seq, id, title, content, filename, newfilename,
+			readcount, downcount, regdate
+		from pds;
+	</select>
+	
+	<insert id="uploadPds" parameterType="ITzy.OTT.dto.PdsDto">
+		insert into pds(id, title, content, filename, newfilename,
+			readcount, downcount, regdate)
+		values (#{id}, #{title}, #{content}, #{filename}, #{newfilename}, 0, 0, now())
+	</insert>
+	
+	<update id="downcount" parameterType="Integer">
+		update pds
+		set downcount = downcount+1
+		where seq = #{seq}
+	</update>
+	
+	<select id="getPds" parameterType="Integer" resultType="ITzy.OTT.dto.PdsDto">
+	select seq, id, title, content, filename, newfilename, 
+		readcount, downcount, regdate
+	from pds
+	where seq=#{seq}
+	</select>
+	
+	<select id="getAllPds" parameterType="ITzy.OTT.dto.BbsParam" resultType="java.lang.Integer">
+	select ifnull(count(*), 0)
+	from pds
+	
+		<if test="choice != null and choice != '' and search != null and search != '' ">
+				<if test="choice == 'title'">
+					where title like concat('%', #{search}, '%')
+				</if>
+				
+				<if test="choice == 'content'">
+					where content like concat('%', #{search}, '%')
+				</if>
+				
+				<if test="choice == 'writer'">
+					where id=#{search}
+				</if>					
+			</if>					
+	</select>
+	
+	
+	
+	<update id="readcountPds" parameterType="Integer">
+		update pds
+		set readcount = readcount+1
+		where seq = #{seq}
+	</update>
+	
+	<update id="updatePds" parameterType="ITzy.OTT.dto.PdsDto">
+		update pds
+		set title=#{title}, content=#{content}, filename=#{filename}, newfilename=#{newfilename}, regdate=now()
+		where seq = #{seq}
+	</update>
+	
+	
+	<delete id="deletePds" parameterType="Integer">
+		delete
+		from pds
+		where seq = #{seq}
+	</delete>
+</mapper>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Member">
+
+	<select id="allMember" resultType="ITzy.OTT.dto.MemberDto">
+		select id, pwd, name, email, auth
+		from member
+	</select>
+
+	<select id="idcheck" parameterType="java.lang.String" resultType="Integer">
+		select count(*)
+		from member
+		where id=#{id}
+	</select>
+
+	<insert id="addmember" parameterType="ITzy.OTT.dto.MemberDto">
+		insert into member(id, pwd, name, email, auth)
+		values(#{id}, #{pwd}, #{name}, #{email}, 2) <!-- 일반회원 2 -->
+	</insert>
+
+	<select id="login" parameterType="ITzy.OTT.dto.MemberDto" resultType="ITzy.OTT.dto.MemberDto">
+		select id, name, email
+		from member
+		where id=#{id} and pwd=#{pwd} and auth=2 <!-- 일반회원 2 -->
+	</select>
+
+	<insert id="BizAadmember" parameterType="ITzy.OTT.dto.MemberDto">
+		insert into member(id, company, pwd, email, contact, auth)
+		values(#{id}, #{company}, #{pwd}, #{email}, #{contact}, 1) <!-- 기업회원 1 -->
+	</insert>
+	
+	<select id="Bizlogin" parameterType="ITzy.OTT.dto.MemberDto" resultType="ITzy.OTT.dto.MemberDto">
+		select id, company, contact, email
+		from member
+		where id=#{id} and pwd=#{pwd} and auth=1 <!-- 기업회원 1 -->
+	</select>
+
+
+
+</mapper>

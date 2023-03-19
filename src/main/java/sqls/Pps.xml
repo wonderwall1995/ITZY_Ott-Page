@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+	
+<mapper namespace="Pps">
+	<select id="ppslist" resultType="ITzy.OTT.dto.PpsDto">
+		select seq, id, ref, step, depth, title, content, del, filename, newfilename, readcount, downcount, regdate, filesize, love, hit, wip
+		from (select row_number()over(order by ref desc, step asc) as rnum,
+				seq, id, ref, step, depth, title, content, del, filename, newfilename, readcount, downcount, regdate, filesize, love, hit, wip
+				from pps
+				<if test="choice != null and nchoice != '' and search != null and nsearch != '' ">
+					<if test="choice == 'title'">
+						where title like concat('%', #{search}, '%')
+					</if>
+					
+					<if test="choice == 'content'">
+						where content like concat('%', #{search}, '%')
+					</if>
+					
+					<if test="choice == 'writer'">
+						where id=#{search}
+					</if>					
+				</if>
+				 order by ref desc, step asc) a
+				where rnum between ${start} and ${end}	
+	</select>
+	
+	<insert id="uploadPps" parameterType="ITzy.OTT.dto.PpsDto">
+		insert into pps(id, title, content, filename, newfilename,
+			readcount, downcount, regdate, del, ref, step, depth)
+		values (#{id}, #{title}, #{content}, #{filename}, #{newfilename}, 0, 0, now(), 0,
+			(select ifnull(max(ref), 0) +1 from pps b), 0, 0)
+	</insert>
+	
+	<select id="getPps" parameterType="Integer" resultType="ITzy.OTT.dto.PpsDto">
+	select seq, id, title, content, filename, newfilename, 
+		readcount, downcount, regdate, del, ref, step, depth
+	from pps
+	where seq=#{seq}
+	</select>
+	
+	<select id="getAllPps" parameterType="ITzy.OTT.dto.PpsParam" resultType="java.lang.Integer">
+		select ifnull(count(*), 0)
+		from pps
+	
+		<if test="choice != null and choice != '' and search != null and search != '' ">
+				<if test="choice == 'title'">
+					where title like concat('%', #{search}, '%')
+				</if>
+				
+				<if test="choice == 'content'">
+					where content like concat('%', #{search}, '%')
+				</if>
+				
+				<if test="choice == 'writer'">
+					where id=#{search}
+				</if>					
+			</if>					
+	</select>
+	
+		<update id="readcountPps" parameterType="Integer">
+		update pps
+		set readcount = readcount + 1
+		where seq = #{seq}
+	</update>
+	
+	<update id="updatePps" parameterType="ITzy.OTT.dto.PpsDto">
+		update pps
+		set title=#{title}, content=#{content}, filename=#{filename}, newfilename=#{newfilename}, regdate=now()
+		where seq = #{seq}
+	</update>
+	
+	<delete id="deletePps" parameterType="Integer">
+		delete
+		from pps
+		where seq = #{seq}
+	</delete>
+</mapper>
